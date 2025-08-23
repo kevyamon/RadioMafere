@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const baseQuery = fetchBaseQuery({ 
+const baseQuery = fetchBaseQuery({
   baseUrl: 'https://radio-mafere-backend.onrender.com',
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.userInfo?.token;
@@ -12,9 +12,9 @@ const baseQuery = fetchBaseQuery({
 });
 
 export const apiSlice = createApi({
-  reducerPath: 'api', 
+  reducerPath: 'api',
   baseQuery: baseQuery,
-  tagTypes: ['Post', 'User'],
+  tagTypes: ['Post', 'User', 'Event', 'Announcement', 'PendingAnnouncement'], // <-- 'PendingAnnouncement' ajouté
 
   endpoints: (builder) => ({
     // --- AUTH ---
@@ -93,7 +93,51 @@ export const apiSlice = createApi({
     // --- STATS (ADMIN) ---
     getStats: builder.query({
         query: () => '/api/stats',
-        providesTags: ['User', 'Post'], // Les stats dépendent des Users et Posts
+        providesTags: ['User', 'Post'],
+    }),
+
+    // --- EVENTS ---
+    getEvents: builder.query({
+      query: () => '/api/events',
+      providesTags: (result = [], error, arg) => [
+        'Event',
+        ...result.map(({ _id }) => ({ type: 'Event', id: _id })),
+      ],
+    }),
+    toggleParticipation: builder.mutation({
+      query: (eventId) => ({
+        url: `/api/events/${eventId}/participate`,
+        method: 'PUT',
+      }),
+      invalidatesTags: (result, error, eventId) => [{ type: 'Event', id: eventId }],
+    }),
+    
+    // --- ANNOUNCEMENTS ---
+    getApprovedAnnouncements: builder.query({
+      query: () => '/api/announcements',
+      providesTags: ['Announcement'],
+    }),
+    createAnnouncement: builder.mutation({
+      query: (newAnnouncement) => ({
+        url: '/api/announcements',
+        method: 'POST',
+        body: newAnnouncement,
+      }),
+    }),
+
+    // --- ANNOUNCEMENT MODERATION (Admin) --- (NOUVELLE SECTION)
+    getPendingAnnouncements: builder.query({
+        query: () => '/api/announcements/pending',
+        providesTags: ['PendingAnnouncement'],
+    }),
+    updateAnnouncementStatus: builder.mutation({
+        query: ({ id, status }) => ({
+            url: `/api/announcements/${id}/status`,
+            method: 'PUT',
+            body: { status },
+        }),
+        // On rafraîchit la liste des annonces en attente ET la liste des annonces publiques
+        invalidatesTags: ['PendingAnnouncement', 'Announcement'],
     }),
   }), 
 });
@@ -108,4 +152,10 @@ export const {
   useGetUsersQuery,
   useUpdateUserStatusMutation,
   useGetStatsQuery,
+  useGetEventsQuery,
+  useToggleParticipationMutation,
+  useGetApprovedAnnouncementsQuery,
+  useCreateAnnouncementMutation,
+  useGetPendingAnnouncementsQuery,    // <-- NOUVEAU HOOK EXPORTÉ
+  useUpdateAnnouncementStatusMutation, // <-- NOUVEAU HOOK EXPORTÉ
 } = apiSlice;

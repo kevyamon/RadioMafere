@@ -1,6 +1,6 @@
+// src/components/Navbar.jsx
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { useLoginMutation } from '../features/api/apiSlice'; // On importe la mutation de déconnexion (même si non utilisée ici, bonne pratique)
 import { logOut } from '../features/auth/authSlice';
 import {
   AppBar,
@@ -29,10 +29,15 @@ const Navbar = () => {
   const handleClose = () => {
     setAnchorEl(null);
   };
+  
+  const handleNavigate = (path) => {
+    navigate(path);
+    handleClose();
+  }
 
   const handleLogout = () => {
     dispatch(logOut());
-    navigate('/login');
+    navigate('/landing');
     handleClose();
   };
 
@@ -42,7 +47,7 @@ const Navbar = () => {
         <Typography
           variant="h6"
           component={RouterLink}
-          to="/"
+          to={userInfo ? "/home" : "/landing"}
           sx={{ flexGrow: 1, color: 'inherit', textDecoration: 'none' }}
         >
           Radio Maféré
@@ -51,6 +56,12 @@ const Navbar = () => {
         {userInfo ? (
           // Si l'utilisateur est connecté
           <div>
+            <Button component={RouterLink} to="/announcements" color="inherit">
+              Annonces
+            </Button>
+            <Button component={RouterLink} to="/agenda" color="inherit">
+              Agenda
+            </Button>
             <IconButton
               size="large"
               aria-label="account of current user"
@@ -61,9 +72,6 @@ const Navbar = () => {
             >
               <AccountCircle />
             </IconButton>
-            <Typography variant="button" sx={{ ml: 1 }}>
-              {userInfo.prenom}
-            </Typography>
             <Menu
               id="menu-appbar"
               anchorEl={anchorEl}
@@ -79,7 +87,10 @@ const Navbar = () => {
               open={Boolean(anchorEl)}
               onClose={handleClose}
             >
-              <MenuItem onClick={handleClose}>Profil</MenuItem>
+              <MenuItem onClick={() => handleNavigate('/profile')}>Profil</MenuItem>
+              {userInfo.role !== 'user' && (
+                <MenuItem onClick={() => handleNavigate('/dashboard')}>Dashboard</MenuItem>
+              )}
               <MenuItem onClick={handleLogout}>Se déconnecter</MenuItem>
             </Menu>
           </div>

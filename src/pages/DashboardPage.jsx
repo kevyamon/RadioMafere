@@ -1,3 +1,4 @@
+// src/pages/DashboardPage.jsx
 import { useSelector } from 'react-redux';
 import { useGetUsersQuery, useUpdateUserStatusMutation, useGetStatsQuery } from '../features/api/apiSlice';
 import { 
@@ -14,7 +15,8 @@ import {
   Chip, 
   Button, 
   Grid, 
-  Alert 
+  Alert,
+  Divider
 } from '@mui/material';
 import { toast } from 'react-toastify';
 import StatCard from '../components/StatCard';
@@ -25,6 +27,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import TodayIcon from '@mui/icons-material/Today';
 import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import PendingAnnouncements from '../components/PendingAnnouncements'; // <-- NOUVELLE LIGNE
 
 const getRoleChipColor = (role) => {
   if (role === 'super_admin') return 'secondary';
@@ -62,36 +65,36 @@ const DashboardPage = () => {
 
       {isLoadingStats && <CircularProgress />}
       {stats && (
-        <Grid container spacing={2} sx={{ mb: 5 }}>
-          <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom>Activité des Utilisateurs</Typography>
-          </Grid>
-          <Grid item xs={6} sm={4}>
-            <StatCard title="Aujourd'hui" value={stats.activeUsers?.daily ?? 0} icon={<TodayIcon fontSize="inherit" />} color="#ff9800" />
-          </Grid>
-          <Grid item xs={6} sm={4}>
-            <StatCard title="Cette semaine" value={stats.activeUsers?.weekly ?? 0} icon={<CalendarViewWeekIcon fontSize="inherit" />} color="#2196f3" />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <StatCard title="Ce mois-ci" value={stats.activeUsers?.monthly ?? 0} icon={<CalendarMonthIcon fontSize="inherit" />} color="#4caf50" />
+        <Box>
+          <Typography variant="h5" gutterBottom>Activité des Utilisateurs</Typography>
+          <Grid container spacing={2} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={4}>
+              <StatCard title="Aujourd'hui" value={stats.activeUsers?.daily ?? 0} icon={<TodayIcon fontSize="inherit" />} color="#ff9800" />
+            </Grid>
+            <Grid item xs={6} sm={4}>
+              <StatCard title="Cette semaine" value={stats.activeUsers?.weekly ?? 0} icon={<CalendarViewWeekIcon fontSize="inherit" />} color="#2196f3" />
+            </Grid>
+            <Grid item xs={6} sm={4}>
+              <StatCard title="Ce mois-ci" value={stats.activeUsers?.monthly ?? 0} icon={<CalendarMonthIcon fontSize="inherit" />} color="#4caf50" />
+            </Grid>
           </Grid>
           
-          <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>Statistiques Générales</Typography>
+          <Typography variant="h5" gutterBottom>Statistiques Générales</Typography>
+          <Grid container spacing={2} sx={{ mb: 5 }}>
+            <Grid item xs={6} sm={3}>
+              <StatCard title="Total Users" value={stats.totalUsers ?? 0} icon={<PeopleIcon fontSize="inherit" />} color="#673ab7" />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <StatCard title="Publications" value={stats.totalPosts ?? 0} icon={<PostAddIcon fontSize="inherit" />} color="#009688" />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <StatCard title="Actifs" value={stats.usersByStatus.actif ?? 0} icon={<CheckCircleIcon fontSize="inherit" />} color="#0288d1" />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <StatCard title="Bannis" value={stats.usersByStatus.banni ?? 0} icon={<BlockIcon fontSize="inherit" />} color="#d32f2f" />
+            </Grid>
           </Grid>
-          <Grid item xs={6} sm={6} md={3}>
-            <StatCard title="Total Users" value={stats.totalUsers ?? 0} icon={<PeopleIcon fontSize="inherit" />} color="#673ab7" />
-          </Grid>
-          <Grid item xs={6} sm={6} md={3}>
-            <StatCard title="Publications" value={stats.totalPosts ?? 0} icon={<PostAddIcon fontSize="inherit" />} color="#009688" />
-          </Grid>
-          <Grid item xs={6} sm={6} md={3}>
-            <StatCard title="Actifs" value={stats.usersByStatus.actif ?? 0} icon={<CheckCircleIcon fontSize="inherit" />} color="#0288d1" />
-          </Grid>
-          <Grid item xs={6} sm={6} md={3}>
-            <StatCard title="Bannis" value={stats.usersByStatus.banni ?? 0} icon={<BlockIcon fontSize="inherit" />} color="#d32f2f" />
-          </Grid>
-        </Grid>
+        </Box>
       )}
       
       <Typography variant="h5" gutterBottom>Gestion des Utilisateurs</Typography>
@@ -133,8 +136,13 @@ const DashboardPage = () => {
           </Table>
         </TableContainer>
       )}
+
+      {/* --- NOUVELLE SECTION DE MODÉRATION --- */}
+      <Divider sx={{ my: 4 }} />
+      <PendingAnnouncements />
+      
     </Box>
   );
 };
 
-export default DashboardPage; 
+export default DashboardPage;

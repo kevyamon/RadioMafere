@@ -23,14 +23,11 @@ const LoginPage = () => {
       const userData = await login(loginData).unwrap();
       dispatch(setCredentials(userData));
       toast.success(`Bienvenue, ${userData.prenom} !`);
-      navigate('/');
+      navigate('/home'); // <-- MODIFIÉ
     } catch (error) {
-      // NOUVELLE LOGIQUE : On vérifie la réponse d'erreur du backend
       if (error?.data?.isBanned) {
-        // Si le backend dit que l'utilisateur est banni
-        navigate('/banned'); // On le redirige vers la page de bannissement
+        navigate('/banned');
       } else {
-        // Sinon, c'est une erreur d'identifiants classiques
         toast.error(error?.data?.message || 'Identifiants invalides.');
       }
     }
