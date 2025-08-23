@@ -42,29 +42,32 @@ const GlobalSocketListener = () => {
 
     // --- GESTION DES MISES À JOUR DE STATS ---
     const handleStatsUpdate = () => {
-      // On rafraîchit les stats, les utilisateurs, etc.
       dispatch(apiSlice.util.invalidateTags(['User', 'Post', 'Stats']));
     };
 
-    // --- NOUVEAU : GESTION DES ANNONCES EN TEMPS RÉEL ---
-    // Pour les admins : une nouvelle annonce est en attente
+    // --- GESTION DES ANNONCES EN TEMPS RÉEL ---
     const handleNewPendingAnnouncement = (newAnnouncement) => {
       if (userInfo && (userInfo.role === 'admin' || userInfo.role === 'super_admin')) {
         toast.info(`Nouvelle annonce à valider : "${newAnnouncement.title.substring(0, 20)}..."`);
-        // On force le rafraîchissement de la liste des annonces en attente
         dispatch(apiSlice.util.invalidateTags(['PendingAnnouncement']));
       }
     };
 
-    // Pour l'auteur : le statut de son annonce a changé
     const handleAnnouncementStatusUpdated = ({ message, status }) => {
       if (status === 'approuvée') {
         toast.success(message);
       } else {
         toast.error(message);
       }
-      // On rafraîchit aussi la liste publique au cas où
       dispatch(apiSlice.util.invalidateTags(['Announcement']));
+    };
+
+    // --- NOUVEL ÉCOUTEUR POUR LES NOTIFICATIONS ---
+    const handleNewNotification = () => {
+      if (userInfo && (userInfo.role === 'admin' || userInfo.role === 'super_admin')) {
+        // On invalide le tag pour forcer le refetch des données de notifications
+        dispatch(apiSlice.util.invalidateTags(['Notification']));
+      }
     };
 
 
@@ -74,6 +77,7 @@ const GlobalSocketListener = () => {
     socket.on('stats_updated', handleStatsUpdate);
     socket.on('new_pending_announcement', handleNewPendingAnnouncement);
     socket.on('announcement_status_updated', handleAnnouncementStatusUpdated);
+    socket.on('new_notification', handleNewNotification); // <-- NOUVELLE LIGNE
 
     // On nettoie les écouteurs quand le composant est démonté
     return () => {
@@ -82,6 +86,7 @@ const GlobalSocketListener = () => {
       socket.off('stats_updated', handleStatsUpdate);
       socket.off('new_pending_announcement', handleNewPendingAnnouncement);
       socket.off('announcement_status_updated', handleAnnouncementStatusUpdated);
+      socket.off('new_notification', handleNewNotification); // <-- NOUVELLE LIGNE
     };
   }, [userInfo, dispatch, navigate]);
 

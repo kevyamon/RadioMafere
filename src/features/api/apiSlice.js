@@ -1,3 +1,4 @@
+// src/features/api/apiSlice.js
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 const baseQuery = fetchBaseQuery({
@@ -14,7 +15,7 @@ const baseQuery = fetchBaseQuery({
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQuery,
-  tagTypes: ['Post', 'User', 'Event', 'Announcement', 'PendingAnnouncement', 'Advertisement'],
+  tagTypes: ['Post', 'User', 'Event', 'Announcement', 'PendingAnnouncement', 'Advertisement', 'Notification'], // <-- TAG AJOUTÉ
 
   endpoints: (builder) => ({
     // --- AUTH ---
@@ -149,7 +150,6 @@ export const apiSlice = createApi({
       }),
       invalidatesTags: ['Advertisement'],
     }),
-    // NOUVELLES MUTATIONS
     updateAdvertisement: builder.mutation({
       query: ({ id, ...data }) => ({
         url: `/api/advertisements/${id}`,
@@ -164,6 +164,19 @@ export const apiSlice = createApi({
         method: 'DELETE',
       }),
       invalidatesTags: ['Advertisement'],
+    }),
+
+    // --- NOTIFICATIONS (Admin) ---
+    getNotifications: builder.query({
+      query: () => '/api/notifications',
+      providesTags: ['Notification'],
+    }),
+    markAsRead: builder.mutation({
+      query: (notificationId) => ({
+        url: `/api/notifications/${notificationId}/read`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['Notification'],
     }),
   }), 
 });
@@ -186,6 +199,9 @@ export const {
   useUpdateAnnouncementStatusMutation,
   useGetActiveAdvertisementsQuery,
   useCreateAdvertisementMutation,
-  useUpdateAdvertisementMutation, // <-- On exporte
-  useDeleteAdvertisementMutation, // <-- On exporte
+  useUpdateAdvertisementMutation,
+  useDeleteAdvertisementMutation,
+  // --- NOUVEAUX EXPORTS ---
+  useGetNotificationsQuery,
+  useMarkAsReadMutation,
 } = apiSlice;
