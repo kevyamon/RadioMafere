@@ -14,7 +14,7 @@ const baseQuery = fetchBaseQuery({
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQuery,
-  tagTypes: ['Post', 'User', 'Event', 'Announcement', 'PendingAnnouncement'], // <-- 'PendingAnnouncement' ajouté
+  tagTypes: ['Post', 'User', 'Event', 'Announcement', 'PendingAnnouncement', 'Advertisement'],
 
   endpoints: (builder) => ({
     // --- AUTH ---
@@ -99,10 +99,7 @@ export const apiSlice = createApi({
     // --- EVENTS ---
     getEvents: builder.query({
       query: () => '/api/events',
-      providesTags: (result = [], error, arg) => [
-        'Event',
-        ...result.map(({ _id }) => ({ type: 'Event', id: _id })),
-      ],
+      providesTags: ['Event'],
     }),
     toggleParticipation: builder.mutation({
       query: (eventId) => ({
@@ -125,7 +122,7 @@ export const apiSlice = createApi({
       }),
     }),
 
-    // --- ANNOUNCEMENT MODERATION (Admin) --- (NOUVELLE SECTION)
+    // --- ANNOUNCEMENT MODERATION (Admin) ---
     getPendingAnnouncements: builder.query({
         query: () => '/api/announcements/pending',
         providesTags: ['PendingAnnouncement'],
@@ -136,8 +133,37 @@ export const apiSlice = createApi({
             method: 'PUT',
             body: { status },
         }),
-        // On rafraîchit la liste des annonces en attente ET la liste des annonces publiques
         invalidatesTags: ['PendingAnnouncement', 'Announcement'],
+    }),
+
+    // --- ADVERTISEMENTS ---
+    getActiveAdvertisements: builder.query({
+      query: () => '/api/advertisements',
+      providesTags: ['Advertisement'],
+    }),
+    createAdvertisement: builder.mutation({
+      query: (newAd) => ({
+        url: '/api/advertisements',
+        method: 'POST',
+        body: newAd,
+      }),
+      invalidatesTags: ['Advertisement'],
+    }),
+    // NOUVELLES MUTATIONS
+    updateAdvertisement: builder.mutation({
+      query: ({ id, ...data }) => ({
+        url: `/api/advertisements/${id}`,
+        method: 'PUT',
+        body: data.formData,
+      }),
+      invalidatesTags: ['Advertisement'],
+    }),
+    deleteAdvertisement: builder.mutation({
+      query: (id) => ({
+        url: `/api/advertisements/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Advertisement'],
     }),
   }), 
 });
@@ -156,6 +182,10 @@ export const {
   useToggleParticipationMutation,
   useGetApprovedAnnouncementsQuery,
   useCreateAnnouncementMutation,
-  useGetPendingAnnouncementsQuery,    // <-- NOUVEAU HOOK EXPORTÉ
-  useUpdateAnnouncementStatusMutation, // <-- NOUVEAU HOOK EXPORTÉ
+  useGetPendingAnnouncementsQuery,
+  useUpdateAnnouncementStatusMutation,
+  useGetActiveAdvertisementsQuery,
+  useCreateAdvertisementMutation,
+  useUpdateAdvertisementMutation, // <-- On exporte
+  useDeleteAdvertisementMutation, // <-- On exporte
 } = apiSlice;

@@ -1,16 +1,16 @@
 // src/pages/HomePage.jsx
 import { useSelector } from 'react-redux';
-import { useGetPostsQuery } from '../features/api/apiSlice';
-import { Box, Typography, Skeleton, Card, CardHeader, Avatar, CardContent, CardActions, IconButton, Divider } from '@mui/material';
+import { useGetPostsQuery, useLikePostMutation } from '../features/api/apiSlice';
+import { Box, Typography, Skeleton, Card, CardHeader, Avatar, CardContent, CardActions, IconButton, Divider, Grid } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import AddPostForm from '../components/AddPostForm';
 import CommentSection from '../components/CommentSection';
-import { useLikePostMutation } from '../features/api/apiSlice';
+import AdvertisementSidebar from '../components/AdvertisementSidebar'; // <-- On importe le nouveau composant
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-const HomePage = () => { // <-- MODIFIÉ
+const HomePage = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const { data: posts, isLoading, isSuccess, isError, error } = useGetPostsQuery();
   const [likePost] = useLikePostMutation();
@@ -53,12 +53,22 @@ const HomePage = () => { // <-- MODIFIÉ
   }
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>Fil d'actualités</Typography>
-      <AddPostForm />
-      <Box>{content}</Box>
-    </Box>
+    <Grid container spacing={4}>
+      {/* Colonne principale pour le contenu */}
+      <Grid item xs={12} md={8}>
+        <Box>
+          <Typography variant="h4" component="h1" gutterBottom>Fil d'actualités</Typography>
+          <AddPostForm />
+          <Box>{content}</Box>
+        </Box>
+      </Grid>
+      
+      {/* Colonne latérale pour les publicités */}
+      <Grid item xs={12} md={4}>
+        <AdvertisementSidebar />
+      </Grid>
+    </Grid>
   );
 };
 
-export default HomePage; // <-- MODIFIÉ
+export default HomePage;

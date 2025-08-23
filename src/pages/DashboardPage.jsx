@@ -27,7 +27,8 @@ import BlockIcon from '@mui/icons-material/Block';
 import TodayIcon from '@mui/icons-material/Today';
 import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import PendingAnnouncements from '../components/PendingAnnouncements'; // <-- NOUVELLE LIGNE
+import PendingAnnouncements from '../components/PendingAnnouncements';
+import AdvertisementManager from '../components/AdvertisementManager'; // <-- On importe le composant manquant
 
 const getRoleChipColor = (role) => {
   if (role === 'super_admin') return 'secondary';
@@ -137,9 +138,12 @@ const DashboardPage = () => {
         </TableContainer>
       )}
 
-      {/* --- NOUVELLE SECTION DE MODÉRATION --- */}
       <Divider sx={{ my: 4 }} />
       <PendingAnnouncements />
+
+      {/* --- On ajoute la gestion des publicités ici --- */}
+      <Divider sx={{ my: 4 }} />
+      <AdvertisementManager />
       
     </Box>
   );
