@@ -4,31 +4,55 @@ import { useGetPostsQuery, useLikePostMutation } from '../features/api/apiSlice'
 import { Box, Typography, Skeleton, Card, CardHeader, Avatar, CardContent, CardActions, IconButton, Divider, Grid } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import MailOutlineIcon from '@mui/icons-material/MailOutline'; // <-- NOUVEL IMPORT
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import AddPostForm from '../components/AddPostForm';
 import CommentSection from '../components/CommentSection';
 import AdvertisementSidebar from '../components/AdvertisementSidebar';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom'; // <-- NOUVEL IMPORT
+import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react'; // <-- NOUVEAUX IMPORTS
+import io from 'socket.io-client'; // <-- NOUVEL IMPORT
+import InteractiveMap from '../components/InteractiveMap'; // <-- NOUVEL IMPORT
+
+const socket = io('https://radio-mafere-backend.onrender.com'); // <-- NOUVELLE LIGNE
 
 const HomePage = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const { data: posts, isLoading, isSuccess, isError, error } = useGetPostsQuery();
   const [likePost] = useLikePostMutation();
-  const navigate = useNavigate(); // <-- NOUVEL IMPORT
+  const navigate = useNavigate();
+
+  // --- NOUVELLE LOGIQUE POUR LA CARTE ---
+  const [pings, setPings] = useState([]);
+
+  useEffect(() => {
+    // 1. On écoute les pings des autres utilisateurs
+    const handleNewPing = (newPing) => {
+      setPings((currentPings) => [...currentPings, newPing]);
+      // On fait disparaître le ping après 5 secondes
+      setTimeout(() => {
+        setPings((currentPings) => currentPings.filter(p => p.id !== newPing.id));
+      }, 5000);
+    };
+
+    socket.on('new_listener_location', handleNewPing);
+
+    // 2. On nettoie l'écouteur quand on quitte la page
+    return () => {
+      socket.off('new_listener_location', handleNewPing);
+    };
+  }, []);
+  // --- FIN DE LA NOUVELLE LOGIQUE ---
 
   const handleLike = (postId) => {
     if (!userInfo) return;
     likePost({ postId, userId: userInfo._id });
   };
 
-  // --- NOUVELLE FONCTION ---
   const handleStartConversation = (recipient) => {
-    // On navigue vers la page de messagerie en passant les infos du destinataire
     navigate('/messages', { state: { newRecipient: recipient } });
   };
-  // --- FIN DE LA NOUVELLE FONCTION ---
 
   let content;
 
@@ -37,7 +61,6 @@ const HomePage = () => {
   } else if (isSuccess) {
     content = posts.map(post => {
       const isLiked = userInfo ? post.likes.includes(userInfo._id) : false;
-      // On vérifie si l'auteur du post n'est pas l'utilisateur connecté
       const isNotCurrentUser = userInfo?._id !== post.author?._id;
 
       return (
@@ -47,7 +70,6 @@ const HomePage = () => {
             title={post.author?.prenom || 'Utilisateur inconnu'}
             subheader={post.createdAt ? formatDistanceToNow(parseISO(post.createdAt), { addSuffix: true, locale: fr }) : ''}
             action={
-              // On affiche le bouton seulement si l'auteur n'est pas l'utilisateur lui-même
               userInfo && isNotCurrentUser && (
                 <IconButton onClick={() => handleStartConversation(post.author)} title={`Envoyer un message à ${post.author.prenom}`}>
                   <MailOutlineIcon />
@@ -75,6 +97,7 @@ const HomePage = () => {
 
   return (
     <Grid container spacing={4}>
+      {/* Colonne principale pour le contenu */}
       <Grid item xs={12} md={8}>
         <Box>
           <Typography variant="h4" component="h1" gutterBottom>Fil d'actualités</Typography>
@@ -83,8 +106,12 @@ const HomePage = () => {
         </Box>
       </Grid>
       
+      {/* Colonne latérale pour la carte et les publicités */}
       <Grid item xs={12} md={4}>
-        <AdvertisementSidebar />
+        <Box sx={{ position: 'sticky', top: '20px' }}> {/* Pour que la colonne reste visible au scroll */}
+          <InteractiveMap pings={pings} />
+          <AdvertisementSidebar />
+        </Box>
       </Grid>
     </Grid>
   );
