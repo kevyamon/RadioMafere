@@ -11,11 +11,11 @@ import AdvertisementSidebar from '../components/AdvertisementSidebar';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react'; // <-- NOUVEAUX IMPORTS
-import io from 'socket.io-client'; // <-- NOUVEL IMPORT
-import InteractiveMap from '../components/InteractiveMap'; // <-- NOUVEL IMPORT
+import { useState, useEffect } from 'react';
+import io from 'socket.io-client';
+import InteractiveMap from '../components/InteractiveMap';
 
-const socket = io('https://radio-mafere-backend.onrender.com'); // <-- NOUVELLE LIGNE
+const socket = io('https://radio-mafere-backend.onrender.com');
 
 const HomePage = () => {
   const { userInfo } = useSelector((state) => state.auth);
@@ -23,27 +23,24 @@ const HomePage = () => {
   const [likePost] = useLikePostMutation();
   const navigate = useNavigate();
 
-  // --- NOUVELLE LOGIQUE POUR LA CARTE ---
   const [pings, setPings] = useState([]);
 
   useEffect(() => {
-    // 1. On écoute les pings des autres utilisateurs
+    fetch('https://radio-mafere-backend.onrender.com/api/location/ping', { method: 'POST' });
+
     const handleNewPing = (newPing) => {
       setPings((currentPings) => [...currentPings, newPing]);
-      // On fait disparaître le ping après 5 secondes
       setTimeout(() => {
         setPings((currentPings) => currentPings.filter(p => p.id !== newPing.id));
       }, 5000);
     };
 
     socket.on('new_listener_location', handleNewPing);
-
-    // 2. On nettoie l'écouteur quand on quitte la page
+    
     return () => {
       socket.off('new_listener_location', handleNewPing);
     };
   }, []);
-  // --- FIN DE LA NOUVELLE LOGIQUE ---
 
   const handleLike = (postId) => {
     if (!userInfo) return;
@@ -97,8 +94,15 @@ const HomePage = () => {
 
   return (
     <Grid container spacing={4}>
-      {/* Colonne principale pour le contenu */}
-      <Grid item xs={12} md={8}>
+      {/* Colonne de gauche : Publicités */}
+      <Grid item xs={12} md={3}>
+        <Box sx={{ position: 'sticky', top: '20px' }}>
+          <AdvertisementSidebar />
+        </Box>
+      </Grid>
+      
+      {/* Colonne du milieu : Fil d'actualités */}
+      <Grid item xs={12} md={6}>
         <Box>
           <Typography variant="h4" component="h1" gutterBottom>Fil d'actualités</Typography>
           <AddPostForm />
@@ -106,11 +110,16 @@ const HomePage = () => {
         </Box>
       </Grid>
       
-      {/* Colonne latérale pour la carte et les publicités */}
-      <Grid item xs={12} md={4}>
-        <Box sx={{ position: 'sticky', top: '20px' }}> {/* Pour que la colonne reste visible au scroll */}
+      {/* Colonne de droite : Carte */}
+      <Grid item xs={12} md={3}>
+        {/* L'AJOUT IMPORTANT EST ICI */}
+        <Box sx={{ 
+          position: 'sticky', 
+          top: '20px', 
+          height: '400px', // Hauteur fixe pour que la carte puisse s'afficher
+          width: '100%'      // S'assure que la boîte prend toute la largeur de la colonne
+        }}>
           <InteractiveMap pings={pings} />
-          <AdvertisementSidebar />
         </Box>
       </Grid>
     </Grid>

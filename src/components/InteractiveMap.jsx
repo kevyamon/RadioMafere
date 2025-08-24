@@ -1,11 +1,11 @@
 // src/components/InteractiveMap.jsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react'; // Pas de changement ici
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { Box, Typography } from '@mui/material';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css'; // On importe le CSS directement ici pour plus de robustesse
+import 'leaflet/dist/leaflet.css';
 
-// On garde l'icône animée
+// ... (Le code de pingIcon et AnimatedMarker ne change pas)
 const pingIcon = new L.Icon({
   iconUrl: 'data:image/svg+xml;base64,' + btoa(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
@@ -20,14 +20,12 @@ const pingIcon = new L.Icon({
   popupAnchor: [0, -16]
 });
 
-// Le composant Marker a maintenant besoin d'une référence à la carte
 const AnimatedMarker = ({ ping, map }) => {
   useEffect(() => {
     if (map && ping) {
-      // Animation "flyTo" qui zoome et se déplace vers le nouveau ping
-      map.flyTo([ping.lat, ping.lon], 7, { // Zoom à 7
+      map.flyTo([ping.lat, ping.lon], 7, {
         animate: true,
-        duration: 2 // en secondes
+        duration: 2
       });
     }
   }, [ping, map]);
@@ -48,6 +46,19 @@ const InteractiveMap = ({ pings }) => {
   const [map, setMap] = useState(null);
   const latestPing = pings.length > 0 ? pings[pings.length - 1] : null;
 
+  // AJOUT POUR LA ROBUSTESSE
+  useEffect(() => {
+    if (map) {
+      // Force Leaflet à recalculer sa taille après un court instant.
+      // Cela corrige les problèmes de rendu si le conteneur n'était pas prêt.
+      const timer = setTimeout(() => {
+        map.invalidateSize();
+      }, 100); // un délai de 100ms est généralement suffisant
+      return () => clearTimeout(timer);
+    }
+  }, [map]);
+
+
   return (
     <Box sx={{ height: '400px', width: '100%', mb: 4, borderRadius: 2, overflow: 'hidden', boxShadow: 3, position: 'relative' }}>
       <Typography 
@@ -61,7 +72,7 @@ const InteractiveMap = ({ pings }) => {
           p: 2, 
           backgroundColor: 'rgba(0, 0, 0, 0.6)', 
           color: 'white',
-          zIndex: 1000, // Pour s'afficher au-dessus de la carte
+          zIndex: 1000,
           textAlign: 'center'
         }}
       >
@@ -73,16 +84,14 @@ const InteractiveMap = ({ pings }) => {
         zoom={6}
         scrollWheelZoom={false}
         style={{ height: '100%', width: '100%' }}
-        whenCreated={setMap} // On sauvegarde l'instance de la carte
-        zoomControl={true} // On s'assure que le contrôle est activé
+        whenCreated={setMap}
+        zoomControl={true}
       >
-        {/* NOUVEAU FOND DE CARTE "DARK" */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
         
-        {/* On anime seulement le dernier ping pour éviter les mouvements chaotiques */}
         {latestPing && <AnimatedMarker ping={latestPing} map={map} />}
 
       </MapContainer>
