@@ -15,9 +15,11 @@ const baseQuery = fetchBaseQuery({
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQuery,
-  tagTypes: ['Post', 'User', 'Event', 'Announcement', 'PendingAnnouncement', 'Advertisement', 'Notification'], // <-- TAG AJOUTÉ
+  tagTypes: ['Post', 'User', 'Event', 'Announcement', 'PendingAnnouncement', 'Advertisement', 'Notification', 'Message'],
 
   endpoints: (builder) => ({
+    // ... (les autres endpoints restent inchangés) ...
+
     // --- AUTH ---
     register: builder.mutation({
       query: (credentials) => ({ url: '/api/auth/register', method: 'POST', body: credentials }),
@@ -178,6 +180,40 @@ export const apiSlice = createApi({
       }),
       invalidatesTags: ['Notification'],
     }),
+
+    // --- MESSAGES ---
+    getConversations: builder.query({
+      query: () => '/api/messages/conversations',
+      providesTags: ['Message'],
+    }),
+    getMessages: builder.query({
+      query: (conversationId) => `/api/messages/conversations/${conversationId}`,
+      providesTags: (result, error, arg) => [{ type: 'Message', id: arg }],
+    }),
+    sendMessage: builder.mutation({
+      query: ({ recipientId, text }) => ({
+        url: `/api/messages/send/${recipientId}`,
+        method: 'POST',
+        body: { text },
+      }),
+      invalidatesTags: ['Message'],
+    }),
+    // NOUVELLES MUTATIONS
+    updateMessage: builder.mutation({
+        query: ({ messageId, text }) => ({
+            url: `/api/messages/${messageId}`,
+            method: 'PUT',
+            body: { text },
+        }),
+        invalidatesTags: (result, error, arg) => [{ type: 'Message' }],
+    }),
+    deleteMessage: builder.mutation({
+        query: (messageId) => ({
+            url: `/api/messages/${messageId}`,
+            method: 'DELETE',
+        }),
+        invalidatesTags: ['Message'],
+    }),
   }), 
 });
 
@@ -201,7 +237,12 @@ export const {
   useCreateAdvertisementMutation,
   useUpdateAdvertisementMutation,
   useDeleteAdvertisementMutation,
-  // --- NOUVEAUX EXPORTS ---
   useGetNotificationsQuery,
   useMarkAsReadMutation,
+  useGetConversationsQuery,
+  useGetMessagesQuery,
+  useSendMessageMutation,
+  // --- NOUVEAUX EXPORTS ---
+  useUpdateMessageMutation,
+  useDeleteMessageMutation,
 } = apiSlice;

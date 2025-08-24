@@ -1,22 +1,22 @@
 // src/pages/DashboardPage.jsx
 import { useSelector } from 'react-redux';
 import { useGetUsersQuery, useUpdateUserStatusMutation, useGetStatsQuery } from '../features/api/apiSlice';
-import { 
-  Box, 
-  Typography, 
-  CircularProgress, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
-  Paper, 
-  Chip, 
-  Button, 
-  Grid, 
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  Button,
+  Grid,
   Alert,
-  Divider
+  Divider,
 } from '@mui/material';
 import { toast } from 'react-toastify';
 import StatCard from '../components/StatCard';
@@ -27,8 +27,9 @@ import BlockIcon from '@mui/icons-material/Block';
 import TodayIcon from '@mui/icons-material/Today';
 import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import DownloadIcon from '@mui/icons-material/Download'; // <-- NOUVEL IMPORT
 import PendingAnnouncements from '../components/PendingAnnouncements';
-import AdvertisementManager from '../components/AdvertisementManager'; // <-- On importe le composant manquant
+import AdvertisementManager from '../components/AdvertisementManager';
 
 const getRoleChipColor = (role) => {
   if (role === 'super_admin') return 'secondary';
@@ -58,42 +59,73 @@ const DashboardPage = () => {
     }
   };
 
+  // --- NOUVELLE FONCTION POUR TÉLÉCHARGER LE RAPPORT ---
+  const handleDownloadReport = () => {
+    const token = userInfo?.token;
+    if (!token) {
+      toast.error("Vous n'êtes pas authentifié.");
+      return;
+    }
+    // On utilise une méthode un peu détournée pour passer le token d'authentification pour un téléchargement
+    fetch('https://radio-mafere-backend.onrender.com/api/reports/weekly', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Erreur réseau ou problème de permission.');
+      }
+      return response.blob();
+    })
+    .then(blob => {
+      // On crée une URL temporaire pour le fichier PDF reçu
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Rapport_Hebdomadaire_RadioMafere.pdf`; // Nom du fichier
+      document.body.appendChild(a);
+      a.click();
+      a.remove(); // On nettoie
+      window.URL.revokeObjectURL(url);
+    })
+    .catch(err => {
+      toast.error("Impossible de télécharger le rapport.");
+    });
+  };
+  // --- FIN DE LA NOUVELLE FONCTION ---
+
   return (
     <Box>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-        Tableau de Bord
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
+          Tableau de Bord
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<DownloadIcon />}
+          onClick={handleDownloadReport}
+        >
+          Rapport Hebdomadaire
+        </Button>
+      </Box>
 
       {isLoadingStats && <CircularProgress />}
       {stats && (
         <Box>
           <Typography variant="h5" gutterBottom>Activité des Utilisateurs</Typography>
           <Grid container spacing={2} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={4}>
-              <StatCard title="Aujourd'hui" value={stats.activeUsers?.daily ?? 0} icon={<TodayIcon fontSize="inherit" />} color="#ff9800" />
-            </Grid>
-            <Grid item xs={6} sm={4}>
-              <StatCard title="Cette semaine" value={stats.activeUsers?.weekly ?? 0} icon={<CalendarViewWeekIcon fontSize="inherit" />} color="#2196f3" />
-            </Grid>
-            <Grid item xs={6} sm={4}>
-              <StatCard title="Ce mois-ci" value={stats.activeUsers?.monthly ?? 0} icon={<CalendarMonthIcon fontSize="inherit" />} color="#4caf50" />
-            </Grid>
+            <Grid item xs={12} sm={4}><StatCard title="Aujourd'hui" value={stats.activeUsers?.daily ?? 0} icon={<TodayIcon fontSize="inherit" />} color="#ff9800" /></Grid>
+            <Grid item xs={6} sm={4}><StatCard title="Cette semaine" value={stats.activeUsers?.weekly ?? 0} icon={<CalendarViewWeekIcon fontSize="inherit" />} color="#2196f3" /></Grid>
+            <Grid item xs={6} sm={4}><StatCard title="Ce mois-ci" value={stats.activeUsers?.monthly ?? 0} icon={<CalendarMonthIcon fontSize="inherit" />} color="#4caf50" /></Grid>
           </Grid>
           
           <Typography variant="h5" gutterBottom>Statistiques Générales</Typography>
           <Grid container spacing={2} sx={{ mb: 5 }}>
-            <Grid item xs={6} sm={3}>
-              <StatCard title="Total Users" value={stats.totalUsers ?? 0} icon={<PeopleIcon fontSize="inherit" />} color="#673ab7" />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <StatCard title="Publications" value={stats.totalPosts ?? 0} icon={<PostAddIcon fontSize="inherit" />} color="#009688" />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <StatCard title="Actifs" value={stats.usersByStatus.actif ?? 0} icon={<CheckCircleIcon fontSize="inherit" />} color="#0288d1" />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <StatCard title="Bannis" value={stats.usersByStatus.banni ?? 0} icon={<BlockIcon fontSize="inherit" />} color="#d32f2f" />
-            </Grid>
+            <Grid item xs={6} sm={3}><StatCard title="Total Users" value={stats.totalUsers ?? 0} icon={<PeopleIcon fontSize="inherit" />} color="#673ab7" /></Grid>
+            <Grid item xs={6} sm={3}><StatCard title="Publications" value={stats.totalPosts ?? 0} icon={<PostAddIcon fontSize="inherit" />} color="#009688" /></Grid>
+            <Grid item xs={6} sm={3}><StatCard title="Actifs" value={stats.usersByStatus.actif ?? 0} icon={<CheckCircleIcon fontSize="inherit" />} color="#0288d1" /></Grid>
+            <Grid item xs={6} sm={3}><StatCard title="Bannis" value={stats.usersByStatus.banni ?? 0} icon={<BlockIcon fontSize="inherit" />} color="#d32f2f" /></Grid>
           </Grid>
         </Box>
       )}
@@ -118,12 +150,8 @@ const DashboardPage = () => {
                 <TableRow key={user._id}>
                   <TableCell>{user.prenom} {user.nom}</TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Chip label={user.role} color={getRoleChipColor(user.role)} size="small" />
-                  </TableCell>
-                  <TableCell>
-                    <Chip label={user.statut} color={getStatusChipColor(user.statut)} size="small" />
-                  </TableCell>
+                  <TableCell><Chip label={user.role} color={getRoleChipColor(user.role)} size="small" /></TableCell>
+                  <TableCell><Chip label={user.statut} color={getStatusChipColor(user.statut)} size="small" /></TableCell>
                   <TableCell>
                     {user.statut === 'actif' ? (
                       <Button variant="contained" color="error" size="small" onClick={() => handleStatusChange(user._id, 'banni')} disabled={isUpdating || user.role === 'super_admin' || user._id === userInfo._id}>Bannir</Button>
@@ -140,8 +168,7 @@ const DashboardPage = () => {
 
       <Divider sx={{ my: 4 }} />
       <PendingAnnouncements />
-
-      {/* --- On ajoute la gestion des publicités ici --- */}
+      
       <Divider sx={{ my: 4 }} />
       <AdvertisementManager />
       

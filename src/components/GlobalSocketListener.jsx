@@ -62,14 +62,21 @@ const GlobalSocketListener = () => {
       dispatch(apiSlice.util.invalidateTags(['Announcement']));
     };
 
-    // --- NOUVEL ÉCOUTEUR POUR LES NOTIFICATIONS ---
+    // --- GESTION DES NOTIFICATIONS ---
     const handleNewNotification = () => {
       if (userInfo && (userInfo.role === 'admin' || userInfo.role === 'super_admin')) {
-        // On invalide le tag pour forcer le refetch des données de notifications
         dispatch(apiSlice.util.invalidateTags(['Notification']));
       }
     };
 
+    // --- NOUVEL ÉCOUTEUR POUR LA MESSAGERIE ---
+    const handleNewMessage = (newMessage) => {
+      // On affiche une petite notification discrète
+      // Le backend doit s'assurer que senderId est populé
+      toast.info(`Nouveau message de ${newMessage.senderId?.prenom || 'un utilisateur'}`);
+      // On invalide le tag pour forcer le rafraîchissement des conversations et des messages
+      dispatch(apiSlice.util.invalidateTags(['Message']));
+    };
 
     // On écoute tous les événements
     socket.on('status_updated', handleStatusUpdate);
@@ -77,20 +84,22 @@ const GlobalSocketListener = () => {
     socket.on('stats_updated', handleStatsUpdate);
     socket.on('new_pending_announcement', handleNewPendingAnnouncement);
     socket.on('announcement_status_updated', handleAnnouncementStatusUpdated);
-    socket.on('new_notification', handleNewNotification); // <-- NOUVELLE LIGNE
+    socket.on('new_notification', handleNewNotification);
+    socket.on('new_message', handleNewMessage);
 
-    // On nettoie les écouteurs quand le composant est démonté
+    // On nettoie les écouteurs
     return () => {
       socket.off('status_updated', handleStatusUpdate);
       socket.off('new_post', handleNewPost);
       socket.off('stats_updated', handleStatsUpdate);
       socket.off('new_pending_announcement', handleNewPendingAnnouncement);
       socket.off('announcement_status_updated', handleAnnouncementStatusUpdated);
-      socket.off('new_notification', handleNewNotification); // <-- NOUVELLE LIGNE
+      socket.off('new_notification', handleNewNotification);
+      socket.off('new_message', handleNewMessage);
     };
   }, [userInfo, dispatch, navigate]);
 
-  return null; // Ce composant n'affiche rien, il ne fait qu'écouter
+  return null;
 };
 
 export default GlobalSocketListener;

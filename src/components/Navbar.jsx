@@ -2,7 +2,7 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { logOut } from '../features/auth/authSlice';
-import { useGetNotificationsQuery, useMarkAsReadMutation } from '../features/api/apiSlice'; // <-- NOUVEAUX IMPORTS
+import { useGetNotificationsQuery, useMarkAsReadMutation } from '../features/api/apiSlice';
 import {
   AppBar,
   Toolbar,
@@ -12,12 +12,12 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Badge, // <-- NOUVEL IMPORT
-  ListItemText, // <-- NOUVEL IMPORT
-  Divider, // <-- NOUVEL IMPORT
+  Badge,
+  ListItemText,
+  Divider,
 } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
-import NotificationsIcon from '@mui/icons-material/Notifications'; // <-- NOUVEL IMPORT
+import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useState } from 'react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -27,17 +27,14 @@ const Navbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // --- NOUVELLE LOGIQUE POUR LES NOTIFICATIONS ---
-  // On ne fetch les notifs que si l'utilisateur est un admin
   const isAdmin = userInfo && (userInfo.role === 'admin' || userInfo.role === 'super_admin');
   const { data: notificationData } = useGetNotificationsQuery(undefined, {
-    skip: !isAdmin, // On saute la requête si ce n'est pas un admin
+    skip: !isAdmin,
   });
   const [markAsRead] = useMarkAsReadMutation();
-  // --- FIN DE LA NOUVELLE LOGIQUE ---
 
   const [anchorEl, setAnchorEl] = useState(null);
-  const [notificationAnchorEl, setNotificationAnchorEl] = useState(null); // <-- NOUVEL ÉTAT POUR LE MENU NOTIF
+  const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -66,12 +63,10 @@ const Navbar = () => {
     handleClose();
   };
 
-  // NOUVELLE FONCTION : Gère le clic sur une notification
   const handleNotificationClick = async (notification) => {
     if (!notification.read) {
       await markAsRead(notification._id);
     }
-    // Si la notif a un lien, on y va
     if (notification.link) {
       navigate(notification.link);
     }
@@ -92,6 +87,9 @@ const Navbar = () => {
 
         {userInfo ? (
           <div>
+            <Button component={RouterLink} to="/messages" color="inherit">
+              Messages {/* <-- NOUVELLE LIGNE */}
+            </Button>
             <Button component={RouterLink} to="/announcements" color="inherit">
               Annonces
             </Button>
@@ -99,7 +97,6 @@ const Navbar = () => {
               Agenda
             </Button>
 
-            {/* --- NOUVEAU BLOC POUR L'ICÔNE DE NOTIFICATION --- */}
             {isAdmin && (
               <>
                 <IconButton
@@ -148,7 +145,6 @@ const Navbar = () => {
                 </Menu>
               </>
             )}
-            {/* --- FIN DU BLOC NOTIFICATION --- */}
 
             <IconButton
               size="large"

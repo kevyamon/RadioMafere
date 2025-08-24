@@ -3,9 +3,9 @@ import { useState } from 'react';
 import {
   useGetActiveAdvertisementsQuery,
   useCreateAdvertisementMutation,
-  useDeleteAdvertisementMutation, // <-- On importe la suppression
+  useDeleteAdvertisementMutation,
 } from '../features/api/apiSlice';
-import EditAdModal from './EditAdModal'; // <-- On importe le modal
+import EditAdModal from './EditAdModal';
 import {
   Box,
   Typography,
@@ -13,9 +13,8 @@ import {
   TextField,
   CircularProgress,
   Paper,
-  Alert,
   Grid,
-  Stack, // Pour les boutons
+  Stack,
   IconButton,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
@@ -31,7 +30,6 @@ const AdvertisementManager = () => {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
 
-  // State pour la modification
   const [editingAd, setEditingAd] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -92,13 +90,28 @@ const AdvertisementManager = () => {
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom sx={{ mt: 4, mb: 2 }}>
+      <Typography variant="h5" gutterBottom>
         Gestion des Publicités
       </Typography>
 
+      {/* --- DÉBUT DU FORMULAIRE RESTAURÉ --- */}
       <Paper component="form" onSubmit={handleSubmit} sx={{ p: 2, mb: 4 }} variant="outlined">
-        {/* ... (contenu du formulaire de création, inchangé) ... */}
+        <Typography variant="h6" sx={{ mb: 2 }}>Ajouter une publicité</Typography>
+        <TextField fullWidth required label="Nom de l'entreprise" name="companyName" value={formData.companyName} onChange={handleTextChange} sx={{ mb: 2 }} />
+        <TextField fullWidth required label="URL de destination" name="targetUrl" value={formData.targetUrl} onChange={handleTextChange} sx={{ mb: 2 }} />
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Button variant="outlined" component="label">
+            Choisir une image
+            <input id="ad-image-input" type="file" hidden accept="image/*" onChange={handleFileChange} />
+          </Button>
+          {preview && <Box component="img" src={preview} alt="Aperçu" sx={{ height: 40, border: '1px solid #ddd', borderRadius: 1 }} />}
+          <Button type="submit" variant="contained" disabled={isCreating}>
+            {isCreating ? <CircularProgress size={24} /> : 'Créer'}
+          </Button>
+        </Stack>
       </Paper>
+      {/* --- FIN DU FORMULAIRE RESTAURÉ --- */}
+
 
       <Typography variant="h6" gutterBottom>Publicités Actives et Inactives</Typography>
       {isLoadingAds && <CircularProgress />}
@@ -129,7 +142,6 @@ const AdvertisementManager = () => {
         <Typography>Aucune publicité pour le moment.</Typography>
       )}
 
-      {/* Le Modal de modification */}
       <EditAdModal ad={editingAd} open={isModalOpen} onClose={handleCloseModal} />
     </Box>
   );
